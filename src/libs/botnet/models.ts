@@ -7,11 +7,15 @@ export interface BotCommand {
 }
 
 export enum BotAction {
-    Hack = "hack",
-    Grow = "grow",
-    Weaken = "weaken",
-    Shutdown = "shutdown",
-    Ping = "ping",
+    Hack = "hack", // Command to hack a target
+    Grow = "grow", // Command to grow a target
+    Weaken = "weaken", // Command to weaken a target
+    
+    Shutdown = "shutdown", // Command to shut down a bot
+    Ping = "ping", // Command to ping a bot
+    DownloadAndRun = "download-and-run", // Command to download and run a script
+    Download = "download", // Command to download a file
+    UpdateAll = "update-all", // Command to update all scripts from a central repository
 }
 
 export interface BotResponse {
