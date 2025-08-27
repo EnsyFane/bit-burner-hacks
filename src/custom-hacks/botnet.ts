@@ -24,7 +24,7 @@ export async function main(ns: NS) {
         return; 
     }
 
-    var command = args[0] as string;
+    const command = args[0] as string;
     switch (command) {
         case "help":
             displayHelp(ns);
@@ -64,8 +64,8 @@ function displayHelp(ns: NS) {
         run ${name} spread <script>                 - Spread the specified script to all hacked servers and start it.
         run ${name} spread <script> --no-start      - Spread the specified script to all hacked servers without starting it.
         run ${name} list                            - List all known servers.
-        run ${name} hacked                          - List all hacked servers.
-        run ${name} not-hacked                      - List all not hacked servers.
+        run ${name} list hacked                     - List all hacked servers.
+        run ${name} list not-hacked                 - List all not hacked servers.
     `);
 }
 
@@ -75,9 +75,8 @@ function displayHelp(ns: NS) {
  * @param script The local path to the script to spread.
  */
 function spreadScript(ns: NS, script: string) {
-    const workerScriptPath = script;
-    if (!ns.fileExists(workerScriptPath)) {
-        ns.tprint(`ERROR: Script not found at ${workerScriptPath}`);
+    if (!ns.fileExists(script)) {
+        ns.tprint(`ERROR: Script not found at ${script}`);
         return;
     }
 
@@ -94,7 +93,7 @@ function spreadScript(ns: NS, script: string) {
     ns.tprint(`INFO: Found ${hackedServers.length} hacked servers.`);
 
     ns.tprint(`INFO: Deploying script to hacked servers...`);
-    deployScript(ns, hackedServers, workerScriptPath, shouldStartScript);
+    deployScript(ns, hackedServers, script, shouldStartScript);
     ns.tprint(`INFO: Deployment complete.`);
 }
 
@@ -152,7 +151,7 @@ function getAllServers(ns: NS, mode: ListMode): string[] {
 
         if (currentHost !== "home") {
             const hacked = ns.hasRootAccess(currentHost);
-            if (mode == ListMode.All){
+            if (mode === ListMode.All){
                 toReturn.push(currentHost);
             }
             else {
@@ -176,17 +175,17 @@ function getAllServers(ns: NS, mode: ListMode): string[] {
  * Deploys the specified script to the given servers.
  * @param ns The Netscript API object.
  * @param servers A list of servers to deploy to.
- * @param workerScriptPath The local path to the worker script.
+ * @param scriptPath The local path to the script.
  * @param shouldStartScript Whether to start the script after deployment.
  */
-function deployScript(ns: NS, servers: string[], workerScriptPath: string, shouldStartScript: boolean) {
+function deployScript(ns: NS, servers: string[], scriptPath: string, shouldStartScript: boolean) {
     for (const server of servers) {
         ns.tprint(`Deploying script to ${server}...`);
-        ns.scriptKill(workerScriptPath, server);
-        const uploaded = ns.scp(workerScriptPath, server);
+        ns.scriptKill(scriptPath, server);
+        const uploaded = ns.scp(scriptPath, server);
         if (uploaded) {
             if (shouldStartScript) {
-                const deployed = ns.exec(workerScriptPath, server);
+                const deployed = ns.exec(scriptPath, server);
                 if (!deployed) {
                     ns.tprint(`ERROR: Failed to start script on ${server}. Most likely the server does not have enough RAM.`);
                 }
