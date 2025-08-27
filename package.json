@@ -1,0 +1,11 @@
+{
+  "name": "bitburner",
+  "version": "1.0.0",
+  "author": "EnsyFane",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
+    "eslint": "^9.34.0",
+    "typescript": "^5.9.2"
+  }
+}

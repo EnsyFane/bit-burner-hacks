@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "esModuleInterop": true,
+    "sourceMap": false,
+    "strict": true,
+    "rootDir": "src/",
+    "outDir": "out/",
+    "allowJs": true,
+    "paths": {
+      "@ns": ["./defs/NetscriptDefinitions"]
+    }
+  }
+}
