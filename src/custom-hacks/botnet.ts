@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 
+/** Enum for listing modes */
 enum ListMode {
     All,
     Hacked,
@@ -13,7 +14,7 @@ const HACKED = `${cyan}HACKED${reset}`;
 const NOT_HACKED = `${red}NOT HACKED${reset}`;
 
 /** 
- * Spreads a script to all available hacked servers.
+ * Spreads a script to all available hacked servers or just lists them.
 */
 export async function main(ns: NS) {
     const args = ns.args;
@@ -48,17 +49,21 @@ export async function main(ns: NS) {
  * Displays help information for the script.
  */
 function displayHelp(ns: NS) {
-    ns.tprint(`\
-    run main.js <command> \
-    \
-    Usage:\
-    \
-    run main.js help                - Show this help message.\
-    run main.js spread <script>     - Spread the specified script to all hacked servers.\
-    run main.js list                - List all known servers.\
-    run main.js hacked              - List all hacked servers.\
-    run main.js not-hacked          - List all not hacked servers.\
-    \
+    const name = ns.getScriptName();
+
+    ns.tprint(`
+    run ${name} <command>
+
+    Description:
+        Script to list servers and manage scripts on hacked servers.
+
+    Usage:
+        run ${name} help                            - Show this help message.
+        run ${name} spread <script>                 - Spread the specified script to all hacked servers and start it.
+        run ${name} spread <script> --no-start      - Spread the specified script to all hacked servers without starting it.
+        run ${name} list                            - List all known servers.
+        run ${name} hacked                          - List all hacked servers.
+        run ${name} not-hacked                      - List all not hacked servers.
     `);
 }
 
