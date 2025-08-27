@@ -34,7 +34,7 @@ export async function main(ns: NS) {
 
     const botId = ns.args[0] as string;
     const commandStr = ns.args[1] as string;
-    const otherArgs = ns.args.slice(2);
+    const otherArgs = ns.args.slice(2).filter(arg => arg !== "--wait-known");
 
     const storedBots = getKnownBots(ns);
     for (const bot of storedBots) {
@@ -55,7 +55,7 @@ function displayHelp(ns: NS) {
     const name = ns.getScriptName();
 
     ns.print(`
-    run ${name} <bot-id> <command> [arg1, arg2 ...]
+    run ${name} <bot-id> <command> [arg1, arg2 ...] [--wait-known]
 
     Description:
         Sends commands to the botnet.
@@ -68,10 +68,14 @@ function displayHelp(ns: NS) {
         weaken [target]            - Commands bot to weaken the specified target server.
         shutdown                   - Commands bot to shut down gracefully.
 
+    Flags:
+        --wait-known               - When using "ALL", stop waiting once all known bots respond.
+
     Usage:
         run ${name}                                 - Show this help message.
 
         run ${name} ALL ping                        - Ping all bots.
+        run ${name} ALL ping --wait-known           - Ping all bots, stop after known bots respond.
         run ${name} n00dles ping                    - Ping n00dles bot.
 
         run ${name} ALL hack n00dles                - All bots hack n00dles.
@@ -87,20 +91,26 @@ function displayHelp(ns: NS) {
 
 async function handleCommand(ns: NS, botId: string, commandStr: string, args: any[]) {
     const isBroadcast = botId.toLowerCase() === "all";
+    const waitKnown = ns.args.includes("--wait-known");
     const commandId = sendCommand(ns, botId, commandStr, args);
     if (isBroadcast) {
-        await handleBroadcastCommand(ns, commandId);
+        await handleBroadcastCommand(ns, commandId, waitKnown);
     } else {
         await handleNonBroadcastCommand(ns, commandId);
     }
 }
 
-async function handleBroadcastCommand(ns: NS, commandId: string) {
+async function handleBroadcastCommand(ns: NS, commandId: string, waitKnown: boolean = false) {
     let responses: string[] = [];
     const startTime = Date.now();
     const timeout = 30000; // 30 seconds timeout for all bots to respond
 
     while (Date.now() - startTime < timeout) {
+        if (waitKnown && knownBots.size > 0 && responses.length >= knownBots.size) {
+            ns.print(`INFO: All ${knownBots.size} known bots have responded. Stopping early due to --wait-known flag.`);
+            break;
+        }
+
         ns.print(`Waiting for responses for ${Math.round((timeout - (Date.now() - startTime)) / 1000)} more seconds...`);
         const response = await receiveResponse(ns, commandId);
         if (response) {
