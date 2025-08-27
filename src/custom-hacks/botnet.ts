@@ -15,11 +15,12 @@ const NOT_HACKED = `${red}NOT HACKED${reset}`;
 
 /** 
  * Spreads a script to all available hacked servers or just lists them.
-*/
+ * @param ns The Netscript API object.
+ */
 export async function main(ns: NS) {
     const args = ns.args;
     if (args.length < 1 || typeof args[0] !== "string") {
-        ns.tprint(`ERROR: Invalid arguments. Use "run main.js help" for more information.`);
+        ns.tprint(`ERROR: Invalid arguments. Use "run ${ns.getScriptName()} help" for more information.`);
         return; 
     }
 
@@ -30,7 +31,7 @@ export async function main(ns: NS) {
             return;
         case "spread":
             if (args.length < 2 || typeof args[1] !== "string") {
-                ns.tprint(`ERROR: No script specified. Usage: run main.js spread <script>`);
+                ns.tprint(`ERROR: No script specified. Usage: run ${ns.getScriptName()} spread <script>`);
                 return; 
             }
             spreadScript(ns, args[1] as string);
@@ -40,13 +41,14 @@ export async function main(ns: NS) {
             listServers(ns, mode);
             return;
         default:
-            ns.tprint(`ERROR: Unknown command "${command}". Use "run main.js help" for more information.`);
+            ns.tprint(`ERROR: Unknown command "${command}". Use "run ${ns.getScriptName()} help" for more information.`);
             return;
     }
 }
 
 /**
  * Displays help information for the script.
+ * @param ns The Netscript API object.
  */
 function displayHelp(ns: NS) {
     const name = ns.getScriptName();
@@ -69,6 +71,7 @@ function displayHelp(ns: NS) {
 
 /**
  * Orchestrates the spreading of a script to all hacked servers.
+ * @param ns The Netscript API object.
  * @param script The local path to the script to spread.
  */
 function spreadScript(ns: NS, script: string) {
@@ -116,6 +119,7 @@ function parseListMode(arg: unknown): ListMode {
 
 /**
  * Lists servers based on the specified mode.
+ * @param ns The Netscript API object.
  * @param mode The mode to list servers in.
  */
 function listServers(ns: NS, mode: ListMode) {
@@ -129,6 +133,7 @@ function listServers(ns: NS, mode: ListMode) {
 
 /**
  * Get a list of servers starting from home based on the specified mode.
+ * @param ns The Netscript API object.
  * @param mode The mode to filter servers.
  * @returns A list of all servers except for home.
  */
@@ -169,6 +174,7 @@ function getAllServers(ns: NS, mode: ListMode): string[] {
 
 /**
  * Deploys the specified script to the given servers.
+ * @param ns The Netscript API object.
  * @param servers A list of servers to deploy to.
  * @param workerScriptPath The local path to the worker script.
  * @param shouldStartScript Whether to start the script after deployment.
