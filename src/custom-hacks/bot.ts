@@ -28,7 +28,7 @@ export async function main(ns: NS) {
             const command: BotCommand = JSON.parse(rawCommand);
             if (command.target === botId) {
                 commandPort.read(); // Remove the command from the port
-            } else if (command.target !== "ALL") {
+            } else if (command.target.toLowerCase() !== "all") {
                 continue; // Not for this bot
             }
             ns.print(`Received command: ${rawCommand}`);

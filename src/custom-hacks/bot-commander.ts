@@ -11,6 +11,7 @@ const knownBots: Set<string> = new Set();
  * Bot network message sender.
  */
 export async function main(ns: NS) {
+    ns.clearLog();
     if (ns.args.length === 0) {
         ns.print(`ERROR: No command specified.`);
         displayHelp(ns);
@@ -129,6 +130,8 @@ async function handleNonBroadcastCommand(ns: NS, commandId: string) {
         if (!response.success) {
             ns.print(`ERROR: Command ${commandId} failed on bot ${response.botId}: ${response.data}`);
         }
+    } else {
+        ns.print(`ERROR: No response received for command ${commandId}.`);
     }
 }
 
@@ -219,14 +222,12 @@ async function receiveResponse(ns: NS, commandId: string, timeout: number = 5000
             }
             responsePort.read(); // Remove the response from the port
             
-            ns.print(`INFO: Received response from bot ${response.botId}: ${JSON.stringify(response)}`);
+            ns.print(`INFO: Received response from bot ${GetColoredText(response.botId, ConsoleColor.Cyan)}: ${JSON.stringify(response)}`);
             return response;
         } catch (err) {
             ns.print(`ERROR: Failed to parse response: ${err}`);
             responsePort.read(); // Remove the malformed data
         }
     }
-
-    ns.print(`WARN: No response received for command ${commandId} within timeout.`);
     return null;
 }
