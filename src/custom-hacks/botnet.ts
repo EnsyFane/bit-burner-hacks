@@ -81,10 +81,12 @@ function spreadScript(ns: NS, script: string) {
     }
 
     let shouldStartScript = true;
-    for (const arg of ns.args) {
+    for (let i = 2; i < ns.args.length; i++) {
+        const arg = ns.args[i];
         if (typeof arg === "string" && arg.toLowerCase() === "--no-start") {
             shouldStartScript = false;
             ns.tprint(`WARN: Script will not be started on hacked servers.`);
+            break;
         }
     }
 
@@ -126,7 +128,11 @@ function listServers(ns: NS, mode: ListMode) {
     const servers = getAllServers(ns, mode);
     ns.tprint(`INFO: Servers found: ${servers.length}`);
     for (const server of servers) {
-        ns.tprint(` - ${server} - ${ns.hasRootAccess(server) ? HACKED : NOT_HACKED}`);
+        // Don't call hasRootAccess again since getAllServers already filtered by this
+        const status = (mode === ListMode.Hacked) ? HACKED : 
+                      (mode === ListMode.NotHacked) ? NOT_HACKED : 
+                      (ns.hasRootAccess(server) ? HACKED : NOT_HACKED);
+        ns.tprint(` - ${server} - ${status}`);
     }
 }
 
@@ -142,7 +148,7 @@ function getAllServers(ns: NS, mode: ListMode): string[] {
     const toReturn: string[] = [];
 
     while (toVisit.length > 0) {
-        const currentHost = toVisit.pop()!;
+        const currentHost = toVisit.shift()!; // Use shift() for breadth-first search
         if (visited.has(currentHost)) {
             continue;
         }
