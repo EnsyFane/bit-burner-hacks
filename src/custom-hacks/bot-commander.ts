@@ -51,6 +51,10 @@ export async function main(ns: NS) {
     ns.print(`Script finished.`)
 }
 
+/**
+ * Displays help information for the bot commander script.
+ * @param ns The Netscript API object.
+ */
 function displayHelp(ns: NS) {
     const name = ns.getScriptName();
 
@@ -89,6 +93,13 @@ function displayHelp(ns: NS) {
     `);
 }
 
+/**
+ * Handles command execution by determining if it's a broadcast or single bot command.
+ * @param ns The Netscript API object.
+ * @param botId The target bot ID or "ALL" for broadcast.
+ * @param commandStr The command string to execute.
+ * @param args Additional arguments for the command.
+ */
 async function handleCommand(ns: NS, botId: string, commandStr: string, args: any[]) {
     const isBroadcast = botId.toLowerCase() === "all";
     const waitKnown = ns.args.includes("--wait-known");
@@ -100,6 +111,12 @@ async function handleCommand(ns: NS, botId: string, commandStr: string, args: an
     }
 }
 
+/**
+ * Handles broadcast commands sent to all bots with timeout and response tracking.
+ * @param ns The Netscript API object.
+ * @param commandId The unique identifier for the command.
+ * @param waitKnown Whether to stop waiting once all known bots respond.
+ */
 async function handleBroadcastCommand(ns: NS, commandId: string, waitKnown: boolean = false) {
     let responses: string[] = [];
     const startTime = Date.now();
@@ -133,6 +150,11 @@ async function handleBroadcastCommand(ns: NS, commandId: string, waitKnown: bool
     }
 }
 
+/**
+ * Handles commands sent to a single specific bot.
+ * @param ns The Netscript API object.
+ * @param commandId The unique identifier for the command.
+ */
 async function handleNonBroadcastCommand(ns: NS, commandId: string) {
     const response = await receiveResponse(ns, commandId);
     if (response) {
@@ -145,15 +167,30 @@ async function handleNonBroadcastCommand(ns: NS, commandId: string) {
     }
 }
 
+/**
+ * Retrieves the list of known bots from persistent storage.
+ * @param ns The Netscript API object.
+ * @returns An array of known bot IDs.
+ */
 function getKnownBots(ns: NS): string[] {
     const result = getData(ns, "knownBots");
     return result ? result : [];
 }
 
+/**
+ * Saves the list of known bots to persistent storage.
+ * @param ns The Netscript API object.
+ * @param bots An array of bot IDs to save.
+ */
 function setKnownBots(ns: NS, bots: string[]) {
     setData(ns, "knownBots", bots);
 }
 
+/**
+ * Adds a new bot to the known bots list if it's not already present.
+ * @param ns The Netscript API object.
+ * @param botId The ID of the bot to add to the known bots list.
+ */
 function appendKnownBots(ns: NS, botId: string) {
     const bots = getKnownBots(ns);
     if (!bots.includes(botId)) {
@@ -208,6 +245,13 @@ function sendCommand(ns: NS, botId: string, commandStr: string, args: any[]): st
     return command.id;
 }
 
+/**
+ * Receives and processes a response from a bot within a specified timeout.
+ * @param ns The Netscript API object.
+ * @param commandId The unique identifier for the command expecting a response.
+ * @param timeout The timeout in milliseconds to wait for a response.
+ * @returns The bot response if received within timeout, null otherwise.
+ */
 async function receiveResponse(ns: NS, commandId: string, timeout: number = 5000): Promise<BotResponse | null> {
     const startTime = Date.now();
 
