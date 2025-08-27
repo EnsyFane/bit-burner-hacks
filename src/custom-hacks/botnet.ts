@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { ConsoleColor, GetColoredText } from "../libs/console";
 
 /** Enum for listing modes */
 enum ListMode {
@@ -7,11 +8,10 @@ enum ListMode {
     NotHacked
 }
 
-const cyan = "\u001b[36m";
-const red = "\u001b[31m";
-const reset = "\u001b[0m";
-const HACKED = `${cyan}HACKED${reset}`;
-const NOT_HACKED = `${red}NOT HACKED${reset}`;
+const WHITELISTED_SERVERS: Set<string> = new Set(["home"]);
+
+const HACKED = GetColoredText(`HACKED`, ConsoleColor.Cyan);
+const NOT_HACKED = GetColoredText(`NOT HACKED`, ConsoleColor.Red);
 
 /** 
  * Spreads a script to all available hacked servers or just lists them.
@@ -137,14 +137,14 @@ function listServers(ns: NS, mode: ListMode) {
 }
 
 /**
- * Get a list of servers starting from home based on the specified mode.
+ * Get a list of servers starting from the current server based on the specified mode.
  * @param ns The Netscript API object.
  * @param mode The mode to filter servers.
- * @returns A list of all servers except for home.
+ * @returns A list of all servers except for whitelisted ones.
  */
 function getAllServers(ns: NS, mode: ListMode): string[] {
     const visited = new Set<string>();
-    const toVisit = ["home"];
+    const toVisit = [ns.getHostname()];
     const toReturn: string[] = [];
 
     while (toVisit.length > 0) {
@@ -155,7 +155,7 @@ function getAllServers(ns: NS, mode: ListMode): string[] {
         visited.add(currentHost);
         // ns.tprint(`Visiting ${currentHost}`);
 
-        if (currentHost !== "home") {
+        if (!WHITELISTED_SERVERS.has(currentHost)) {
             const hacked = ns.hasRootAccess(currentHost);
             if (mode === ListMode.All){
                 toReturn.push(currentHost);
