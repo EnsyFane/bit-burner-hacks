@@ -20,5 +20,5 @@ export function setData(ns: NS, key: string, value: any): void {
         }
     }
     data[key] = value;
-    ns.write("datastore.json", JSON.stringify(data));
+    ns.write("datastore.json", JSON.stringify(data), "w");
 }

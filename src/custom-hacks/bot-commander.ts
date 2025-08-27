@@ -1,7 +1,7 @@
 import { NS, NetscriptPort } from "@ns";
 import { BotCommand, BotAction, BotChannels, EMPTY_CHANNEL_DATA, BotResponse } from "../libs/botnet/models";
 import { getData, setData } from "../libs/datastore";
-import { ConsoleColor, WriteConsole } from "../libs/console";
+import { ConsoleColor, WriteConsole, GetColoredText } from "../libs/console";
 
 let commandPort: NetscriptPort;
 let responsePort: NetscriptPort;
@@ -29,6 +29,8 @@ export async function main(ns: NS) {
         return;
     }
 
+    ns.disableLog("ALL");
+
     const botId = ns.args[0] as string;
     const commandStr = ns.args[1] as string;
     const otherArgs = ns.args.slice(2);
@@ -44,6 +46,8 @@ export async function main(ns: NS) {
     responsePort.clear();
 
     await handleCommand(ns, botId, commandStr, otherArgs);
+
+    ns.print(`Script finished.`)
 }
 
 function displayHelp(ns: NS) {
@@ -93,15 +97,17 @@ async function handleCommand(ns: NS, botId: string, commandStr: string, args: an
 async function handleBroadcastCommand(ns: NS, commandId: string) {
     let responses: string[] = [];
     const startTime = Date.now();
-    const timeout = 60000; // 60 seconds timeout for all bots to respond
+    const timeout = 30000; // 30 seconds timeout for all bots to respond
 
     while (Date.now() - startTime < timeout) {
-        ns.print(`INFO: Waiting for responses...`);
+        ns.print(`Waiting for responses for ${Math.round((timeout - (Date.now() - startTime)) / 1000)} more seconds...`);
         const response = await receiveResponse(ns, commandId);
         if (response) {
-            ns.print(`INFO: Received response from bot ${response.botId}: ${JSON.stringify(response)}`);
             appendKnownBots(ns, response.botId);
             responses.push(response.botId);
+            if (!response.success) {
+                ns.print(`ERROR: Command ${commandId} failed on bot ${response.botId}: ${response.data}`);
+            }
         }
     }
 
@@ -112,15 +118,17 @@ async function handleBroadcastCommand(ns: NS, commandId: string) {
 
     const unresponsiveBots = knownBots.difference(new Set(responses));
     if (unresponsiveBots.size > 0) {
-        ns.print(`WARN: The following bots did not respond: ${Array.from(unresponsiveBots).join(", ")}`);
+        ns.print(`WARN: The following bots did not respond: ${Array.from(unresponsiveBots).map(bot => GetColoredText(bot, ConsoleColor.Red)).join(", ")}`);
     }
 }
 
 async function handleNonBroadcastCommand(ns: NS, commandId: string) {
     const response = await receiveResponse(ns, commandId);
     if (response) {
-        ns.print(`INFO: Received response from bot ${response.botId}: ${JSON.stringify(response)}`);
         appendKnownBots(ns, response.botId);
+        if (!response.success) {
+            ns.print(`ERROR: Command ${commandId} failed on bot ${response.botId}: ${response.data}`);
+        }
     }
 }
 
@@ -191,7 +199,11 @@ async function receiveResponse(ns: NS, commandId: string, timeout: number = 5000
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeout) {
-        await responsePort.nextWrite();
+        await ns.sleep(500);
+
+        if (responsePort.empty()) {
+            continue;
+        }
 
         const rawResponse = responsePort.peek() as string;
         if (rawResponse === EMPTY_CHANNEL_DATA) {
@@ -215,6 +227,6 @@ async function receiveResponse(ns: NS, commandId: string, timeout: number = 5000
         }
     }
 
-    ns.print(`ERROR: No response received for command ${commandId} within timeout.`);
+    ns.print(`WARN: No response received for command ${commandId} within timeout.`);
     return null;
 }

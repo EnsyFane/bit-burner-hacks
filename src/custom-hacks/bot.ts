@@ -1,7 +1,6 @@
 import { NS, NetscriptPort } from "@ns";
 import { BotChannels, EMPTY_CHANNEL_DATA, BotCommand, BotAction, BotResponse } from "../libs/botnet/models";
 
-let botId: string;
 let commandPort: NetscriptPort;
 let responsePort: NetscriptPort;
 
@@ -9,7 +8,7 @@ let responsePort: NetscriptPort;
  * Worker script for the C&C Worker.
  */
 export async function main(ns: NS) {
-    botId = ns.getHostname();
+    const botId = ns.getHostname();
     
     ns.print(`INFO: Bot with id "${botId}" started at ${new Date().toLocaleString()}`);
 
@@ -21,18 +20,20 @@ export async function main(ns: NS) {
 
         const rawCommand = commandPort.peek() as string;
         if (rawCommand == EMPTY_CHANNEL_DATA) {
+            ns.print(`WARN: Empty command received. Continuing to wait...`);
             continue;
         }
 
         try {
             const command: BotCommand = JSON.parse(rawCommand);
-            if (command.target !== botId) {
-                continue;
+            if (command.target === botId) {
+                commandPort.read(); // Remove the command from the port
+            } else if (command.target !== "ALL") {
+                continue; // Not for this bot
             }
-            commandPort.read(); // Remove the command from the port
-            ns.print(`INFO: Received command: ${rawCommand}`);
+            ns.print(`Received command: ${rawCommand}`);
 
-            await handleCommand(ns, command);
+            await handleCommand(ns, command, botId);
         }
         catch (err) {
             ns.print(`ERROR: Failed to parse command: ${err}`);
@@ -40,20 +41,20 @@ export async function main(ns: NS) {
     }
 }
 
-async function handleCommand(ns: NS, command: BotCommand) {
+async function handleCommand(ns: NS, command: BotCommand, botId: string) {
     switch (command.action) {
         case BotAction.Ping:
             ns.print(`INFO: Ping command received.`);
-            sendResponse(ns, command, true, "Pong");
+            sendResponse(ns, command, botId, true, "Pong");
             break;
         default:
             ns.print(`WARN: Unknown command action: ${command.action}`);
-            sendResponse(ns, command, false, `Unknown action: ${command.action}`);
+            sendResponse(ns, command, botId, false, `Unknown action: ${command.action}`);
             break;
     }
 }
 
-function sendResponse(ns: NS, command: BotCommand, success: boolean, data?: any) {
+function sendResponse(ns: NS, command: BotCommand, botId: string, success: boolean, data?: any) {
     const response: BotResponse = {
         botId: botId,
         commandId: command.id,
@@ -63,5 +64,5 @@ function sendResponse(ns: NS, command: BotCommand, success: boolean, data?: any)
     };
     responsePort.write(JSON.stringify(response));
 
-    ns.print(`INFO: Sent response for command ${command.id}: ${JSON.stringify(response)}`);
+    ns.print(`Sent response for command ${command.id}: ${JSON.stringify(response)}`);
 }
